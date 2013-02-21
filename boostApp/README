@@ -1,0 +1,27 @@
+This readme is for experts only!
+It shows how boost libraries are extracted and what minor patch is created/applied.
+
+
+
+
+
+diff -Naur boost_1_53_0 boost_1_53_0.atomicPatch > boostAtomicUseEpicsMutex.patch
+# patches subdirectory contains all the patches agains clean boost distribution
+
+cd $BOOST_ROOT/..
+patch -p0 < boostAtomicUseEpicsMutex.patch
+
+
+cd $BOOST_ROOT
+./bootstrap
+cd tools/bcp
+../../b2
+cd ../..
+$BOOST_ROOT/dist/bin/bcp --boost=$BOOST_ROOT `ls -1 boost/tr1/*.hpp | grep -v regex | xargs` boost/circular_buffer.hpp boost/move/move.hpp boost/lockfree/*.hpp boost/test/unit_test.hpp boost/atomic.hpp build $BOOST_OUTPUT_DIR
+
+
+Boost.Random has a binary component which is only needed if you're using random_device.
+Boost.Test can be used in “header-only” or “separately compiled” mode, although separate compilation is recommended for serious use.
+Boost.Atomic has one cpp in case of no-lockfree support.
+
+Boost.Build was added in case somebody would like to build anything...
