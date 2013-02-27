@@ -58,7 +58,7 @@ extern void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage);
 extern void MBCSVExport(MBEntity &e, std::ostream &o);
 extern void MBCSVImport(MBEntity &e, std::istream &i);
 
-extern void MBStats(MBEntity &e, std::ostream &o);
+extern void MBStats(MBEntity &e, std::size_t skipFirstNSamples, std::ostream &o);
 
 extern void MBNormalize(MBEntity &e);
 
@@ -80,7 +80,7 @@ extern void MBInit();
 
 #define MB_NORMALIZE(NAME) MBNormalize(MB_NAME(NAME))
 
-#define MB_STATS(NAME, STREAM) MBStats(MB_NAME(NAME), STREAM)
+#define MB_STATS(NAME, SKIP_FIRST_N_SAMPLES, STREAM) MBStats(MB_NAME(NAME), SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_CSV_EXPORT(NAME, STREAM) MBCSVExport(MB_NAME(NAME), STREAM)
 #define MB_CSV_IMPORT(NAME, STREAM) MBCSVImport(MB_NAME(NAME), STREAM)
@@ -104,7 +104,7 @@ extern void MBInit();
 
 #define MB_NORMALIZE(NAME)
 
-#define MB_STATS(NAME, STREAM)
+#define MB_STATS(NAME, SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_CSV_EXPORT(NAME, STREAM)
 #define MB_CSV_IMPORT(NAME, STREAM)

@@ -21,11 +21,15 @@ uint64_t MBTime()
     return mach_absolute_time();
 }
 #else
+//#include <sys/time.h>
 uint64_t MBTime()
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return static_cast<uint64_t>(ts.tv_sec) * 1000000000 + static_cast<uint64_t>(ts.tv_nsec);
+     struct timespec ts;
+     clock_gettime(CLOCK_REALTIME, &ts);
+     return static_cast<uint64_t>(ts.tv_sec) * 1000000000 + static_cast<uint64_t>(ts.tv_nsec);
+//     struct timeval tv;
+//     gettimeofday(&tv, NULL);
+//     return static_cast<uint64_t>(tv.tv_sec) * 1000000000 + static_cast<uint64_t>(tv.tv_usec) * 1000;
 }
 #endif
 
@@ -34,6 +38,7 @@ uint64_t MBTime()
 #else
 #define GETPID() getpid()
 #endif
+
 void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage)
 {
     // no copy and no MBPoint init solution
@@ -111,40 +116,66 @@ struct MBStatistics
     std::size_t count;
     uint64_t min;
     uint64_t max;
-    double rms;
+    double sum;
+
+    double mean;
+    double stdev;
     
     MBStatistics() :
         count(0),
         min(std::numeric_limits<uint64_t>::max()),
         max(std::numeric_limits<uint64_t>::min()),
-        rms(0.0)
+        sum(0.0),
+        mean(0.0),
+        stdev(0.0)
     {}
-    
+
     MBStatistics(uint64_t sample) :
         count(1),
         min(sample),
         max(sample),
-        rms(sample*sample)
+        sum(sample),
+        mean(0.0),
+        stdev(0.0)
     {
-    };
-    
+    }
+
     void addSample(uint64_t sample)
     {
         count++;
         if (sample < min) min = sample;
         if (sample > max) max = sample;
-        rms += sample*sample;
-    };
+        sum += sample;
+    }
+
+    void pass1Epilogue()
+    {
+        mean = sum/(double)count;
+    }
+
+    void addSamplePass2(uint64_t sample)
+    {
+        double diff = sample - mean;
+        stdev += diff*diff;
+    }
+
+    void pass2Epilogue()
+    {
+        stdev = sqrt(stdev/(double)count);
+    }
+
 };
 
 typedef std::map<uint8_t, MBStatistics> StatsMapPerStage;
 
-void MBStats(MBEntity &e, std::ostream &o)
+void MBStats(MBEntity &e,  std::size_t skipFirstNSamples, std::ostream &o)
 {
     MBNormalize(e);
     
     StatsMapPerStage stats;
-    
+    std::size_t iterationCount = 0;
+
+    // pass 1
     const std::size_t len = e.pos.load(); 
     for (std::size_t i = 0; i < len; i++)
     {
@@ -152,8 +183,17 @@ void MBStats(MBEntity &e, std::ostream &o)
         
         // first stage is start time, skip
         if (p.stage == 0)
+        {
+            // new first stage means new iteration
+            iterationCount++;
             continue;
-            
+        }
+
+        // skip fist N iterations
+        // NOTE: we assume stages (iterations) are ordered
+        if (iterationCount <= skipFirstNSamples)
+            continue;
+
         StatsMapPerStage::iterator s = stats.find(p.stage);
         if (s == stats.end())
             stats[p.stage] = MBStatistics(p.time);
@@ -161,9 +201,46 @@ void MBStats(MBEntity &e, std::ostream &o)
             s->second.addSample(p.time);
     }
     
+    for (StatsMapPerStage::iterator i = stats.begin();
+         i != stats.end();
+         i++)
+        i->second.pass1Epilogue();
+
+
+
+    iterationCount = 0;
+
+    // pass 2
+    for (std::size_t i = 0; i < len; i++)
+    {
+        MBPoint& p = e.points[i];
+
+        // first stage is start time, skip
+        if (p.stage == 0)
+        {
+            // new first stage means new iteration
+            iterationCount++;
+            continue;
+        }
+
+        // skip fist N iterations
+        // NOTE: we assume stages (iterations) are ordered
+        if (iterationCount <= skipFirstNSamples)
+            continue;
+
+        stats[p.stage].addSamplePass2(p.time);
+    }
+
+    for (StatsMapPerStage::iterator i = stats.begin();
+         i != stats.end();
+         i++)
+        i->second.pass2Epilogue();
+
+
     uint64_t smin = 0;
     uint64_t smax = 0;
-    double srms = 0;
+    double smean = 0;
+    double sstdev = 0;
 
     for (StatsMapPerStage::iterator i = stats.begin();
          i != stats.end();
@@ -171,21 +248,23 @@ void MBStats(MBEntity &e, std::ostream &o)
     {
         smin += i->second.min;
         smax += i->second.max;
-        double rrms = sqrt(i->second.rms/(double)i->second.count);
-        srms += rrms;
-        
-        o << "stage " << std::setw(4) << static_cast<uint32_t>(i->first)
-                      << ": min = " << std::setw(16) << i->second.min 
-                      << ", max = " << std::setw(16) << i->second.max
-                      << ", rms = " << std::setw(16) << static_cast<uint64_t>(rrms) << std::endl;
+        smean += i->second.mean;
+        sstdev += i->second.stdev;
+
+        o << "stage " << std::setw(3) << static_cast<uint32_t>(i->first)
+                      << ": min = " << std::setw(9) << i->second.min
+                      << ", max = " << std::setw(9) << i->second.max
+                      << ", mean = " << std::setw(9) << static_cast<uint64_t>(i->second.mean)
+                      << ", stdev = " << std::setw(9) << static_cast<uint64_t>(i->second.stdev) << std::endl;
     }
     
-    o << std::string(82,'-') << std::endl;
+    o << std::string(80,'-') << std::endl;
     
-    o << "stage " << std::setw(4) << "sum"
-                    << ": min = " << std::setw(16) << smin 
-                    << ", max = " << std::setw(16) << smax
-                    << ", rms = " << std::setw(16) << static_cast<uint64_t>(srms) << std::endl;
+    o << "stage " << std::setw(3) << "sum"
+                    << ": min = " << std::setw(9) << smin
+                    << ", max = " << std::setw(9) << smax
+                    << ", mean = " << std::setw(9) << static_cast<uint64_t>(smean)
+                    << ", stdev = " << std::setw(9) << static_cast<uint64_t>(sstdev) << std::endl;
 }
 
 typedef std::vector<MBEntity*> EntitiesVector;

@@ -4,6 +4,8 @@
 #include <cstring>
 
 MB_DECLARE(e, 64000);
+// TODO set via cmd line options
+std::size_t skipFirstNSamples = 0;
 
 // TODO command line options
 int main(int argc, char** argv)
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
             MB_PRINT(e, std::cout);
         }
         else
-            MB_STATS(e, std::cout);
+            MB_STATS(e, skipFirstNSamples, std::cout);
     }
     else
     {
