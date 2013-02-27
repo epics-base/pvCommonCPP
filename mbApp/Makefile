@@ -15,7 +15,7 @@ mb_stat_SRCS += mb_stat.cpp
 mb_stat_LIBS += Com pvMB
 
 LIBRARY = pvMB
-pvMV_LIBS = Com
+pvMB_LIBS = Com
 
 include $(TOP)/configure/RULES
 
