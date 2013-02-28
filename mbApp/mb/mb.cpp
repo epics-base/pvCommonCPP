@@ -48,12 +48,30 @@ void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage)
     p.time = MBTime();
 }
 
-void MBCSVExport(MBEntity &e, std::ostream &o)
+void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o)
 {
+    std::size_t iterationCount = 0;
     const std::size_t len = e.pos.load(); 
     for (std::size_t i = 0; i < len; i++)
     {
         MBPoint& p = e.points[i];
+
+        // first stage is start time, skip
+        if (p.stage == 0)
+        {
+            // new first stage means new iteration
+            iterationCount++;
+            continue;
+        }
+        // process only one stage, if stageOnly is not 0
+        else if (stageOnly != 0 && stageOnly != p.stage)
+            continue;
+
+        // skip fist N iterations
+        // NOTE: we assume stages (iterations) are ordered
+        if (iterationCount <= skipFirstNSamples)
+            continue;
+
         o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
     }
 }
@@ -168,7 +186,7 @@ struct MBStatistics
 
 typedef std::map<uint8_t, MBStatistics> StatsMapPerStage;
 
-void MBStats(MBEntity &e,  std::size_t skipFirstNSamples, std::ostream &o)
+void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o)
 {
     MBNormalize(e);
     
@@ -188,6 +206,9 @@ void MBStats(MBEntity &e,  std::size_t skipFirstNSamples, std::ostream &o)
             iterationCount++;
             continue;
         }
+        // process only one stage, if stageOnly is not 0
+        else if (stageOnly != 0 && stageOnly != p.stage)
+            continue;
 
         // skip fist N iterations
         // NOTE: we assume stages (iterations) are ordered
@@ -222,6 +243,9 @@ void MBStats(MBEntity &e,  std::size_t skipFirstNSamples, std::ostream &o)
             iterationCount++;
             continue;
         }
+        // process only one stage, if stageOnly is not 0
+        else if (stageOnly != 0 && stageOnly != p.stage)
+            continue;
 
         // skip fist N iterations
         // NOTE: we assume stages (iterations) are ordered
@@ -355,7 +379,7 @@ void MBEntityRegister(MBEntity *e)
                 std::ofstream out(fileName);
                 if (out.is_open())
                 {
-                    MBCSVExport(*(*i), out);
+                    MBCSVExport(*(*i), 0, 0, out);
                     out.close();
                 }
                 else

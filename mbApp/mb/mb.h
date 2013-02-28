@@ -1,6 +1,8 @@
 #ifndef _MB_H_
 #define _MB_H_
 
+#if PV_MB
+
 #include <string>
 #include <vector>
 #include <stdint.h>
@@ -55,17 +57,16 @@ extern uint64_t MBTime();
 
 extern void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage);
 
-extern void MBCSVExport(MBEntity &e, std::ostream &o);
+extern void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
 extern void MBCSVImport(MBEntity &e, std::istream &i);
 
-extern void MBStats(MBEntity &e, std::size_t skipFirstNSamples, std::ostream &o);
+extern void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
 
 extern void MBNormalize(MBEntity &e);
 
 
 extern void MBInit();
 
-#if PV_MB
 
 #define MB_NAME(NAME) g_MB_##NAME
 
@@ -80,12 +81,15 @@ extern void MBInit();
 
 #define MB_NORMALIZE(NAME) MBNormalize(MB_NAME(NAME))
 
-#define MB_STATS(NAME, SKIP_FIRST_N_SAMPLES, STREAM) MBStats(MB_NAME(NAME), SKIP_FIRST_N_SAMPLES, STREAM)
+#define MB_STATS(NAME, STREAM) MBStats(MB_NAME(NAME), 0, 0, STREAM)
+#define MB_STATS_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM) MBStats(MB_NAME(NAME), STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 
-#define MB_CSV_EXPORT(NAME, STREAM) MBCSVExport(MB_NAME(NAME), STREAM)
+#define MB_CSV_EXPORT(NAME, STREAM) MBCSVExport(MB_NAME(NAME), 0, 0, STREAM)
+#define MB_CSV_EXPORT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM) MBCSVExport(MB_NAME(NAME), STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 #define MB_CSV_IMPORT(NAME, STREAM) MBCSVImport(MB_NAME(NAME), STREAM)
 
 #define MB_PRINT(NAME, STREAM) MB_CSV_EXPORT(NAME, STREAM)
+#define MB_PRINT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM) MB_CSV_EXPORT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_INIT MBInit()
 
@@ -104,12 +108,15 @@ extern void MBInit();
 
 #define MB_NORMALIZE(NAME)
 
-#define MB_STATS(NAME, SKIP_FIRST_N_SAMPLES, STREAM)
+#define MB_STATS(NAME, STREAM)
+#define MB_STATS_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_CSV_EXPORT(NAME, STREAM)
+#define MB_CSV_EXPORT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 #define MB_CSV_IMPORT(NAME, STREAM)
 
 #define MB_PRINT(NAME, STREAM)
+#define MB_PRINT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_INIT
 

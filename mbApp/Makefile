@@ -6,6 +6,7 @@ MBTOP = $(TOP)/mbApp/
 INSTALL_INCLUDE = $(INSTALL_LOCATION)/include/pv
 
 SRC_DIRS += $(MBTOP)/mb
+USR_CXXFLAGS += -DPV_MB
 INC += mb.h
 LIBSRCS += mb.cpp
 
