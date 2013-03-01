@@ -7,6 +7,38 @@
 #include <epicsStdlib.h>
 
 
+// NOTE: this can be replaced with epicsScanLong in 3.15
+#include <errno.h>
+int
+parseLong(const char *str, long *to, int base)
+{
+    int c;
+    char *endp;
+    long value;
+
+    while ((c = *str) && isspace(c))
+        ++str;
+
+    errno = 0;
+    value = strtol(str, &endp, base);
+
+    if (endp == str)
+        return S_stdlib_noConversion;
+    if (errno == EINVAL)    /* Not universally supported */
+        return S_stdlib_badBase;
+    if (errno == ERANGE)
+        return S_stdlib_overflow;
+
+    while ((c = *endp) && isspace(c))
+        ++endp;
+    if (c)
+        return S_stdlib_extraneous;
+
+    *to = value;
+    return 0;
+}
+
+
 void usage (void)
 {
     fprintf (stderr, "\nUsage: mb_stat [options] <micro-benchmark .csv filename>\n\n"
@@ -35,7 +67,7 @@ int main(int argc, char** argv)
             return 0;
         case 's':               /* Select stage */
             long sv;
-            if(epicsScanLong(optarg, &sv, 10) != 1 || sv <= 0)
+            if(parseLong(optarg, &sv, 10) != 0 || sv <= 0)
             {
                 fprintf(stderr, "'%s' is not a valid stage value "
                         "- ignored. ('mb_stat -h' for help.)\n", optarg);
@@ -45,7 +77,7 @@ int main(int argc, char** argv)
             break;
         case 'i':               /* Ignore first N samples */
             long iv;
-            if(epicsScanLong(optarg, &iv, 10) != 1 || iv < 0)
+            if(parseLong(optarg, &iv, 10) != 0 || iv < 0)
             {
                 fprintf(stderr, "'%s' is not a valid non-negative integer value "
                         "- ignored. ('mb_stat -h' for help.)\n", optarg);
