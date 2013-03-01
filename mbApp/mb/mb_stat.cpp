@@ -23,16 +23,16 @@ parseLong(const char *str, long *to, int base)
     value = strtol(str, &endp, base);
 
     if (endp == str)
-        return S_stdlib_noConversion;
+        return 1;
     if (errno == EINVAL)    /* Not universally supported */
-        return S_stdlib_badBase;
+        return 2;
     if (errno == ERANGE)
-        return S_stdlib_overflow;
+        return 3;
 
     while ((c = *endp) && isspace(c))
         ++endp;
     if (c)
-        return S_stdlib_extraneous;
+        return 4;
 
     *to = value;
     return 0;
