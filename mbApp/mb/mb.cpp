@@ -61,10 +61,11 @@ void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, 
         {
             // new first stage means new iteration
             iterationCount++;
-            continue;
+            // do not skip here
         }
+
         // process only one stage, if stageOnly is not 0
-        else if (stageOnly != 0 && stageOnly != p.stage)
+        if (stageOnly != 0 && stageOnly != p.stage)
             continue;
 
         // skip fist N iterations

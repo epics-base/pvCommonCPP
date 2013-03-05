@@ -51,7 +51,7 @@ void usage (void)
     );
 }
 
-MB_DECLARE(e, 64000);
+MB_DECLARE(importCSV, 64000);
 
 int main(int argc, char** argv)
 {
@@ -117,16 +117,16 @@ int main(int argc, char** argv)
     std::ifstream in(fileName);
     if (in.is_open())
     {
-        MB_CSV_IMPORT(e, in);
+        MB_CSV_IMPORT(importCSV, in);
         in.close();
 
         if (normalizeOnly)
         {
-            MB_NORMALIZE(e);
-            MB_PRINT_OPT(e, stageOnly, ignoreFirstNSamples, std::cout);
+            MB_NORMALIZE(importCSV);
+            MB_PRINT_OPT(importCSV, stageOnly, ignoreFirstNSamples, std::cout);
         }
         else
-            MB_STATS_OPT(e, stageOnly, ignoreFirstNSamples, std::cout);
+            MB_STATS_OPT(importCSV, stageOnly, ignoreFirstNSamples, std::cout);
     }
     else
     {
