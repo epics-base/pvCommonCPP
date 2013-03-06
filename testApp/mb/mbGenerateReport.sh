@@ -162,6 +162,10 @@ This report was generated at $DATE using the following command-line:
     $FULL_CMD_LINE
 </pre>
 
+<p>
+Default unit is nanosecond.
+</p>
+
 <hr />
 </div>
 
@@ -239,7 +243,8 @@ STAGE_REPORT=$( cat << EOF
 <h2>Stage $STAGE</h1>
 
 <div class="image" style="text-align:center">
-<img src="./$STAGE_GRAPH_BASENAME" alt="Stage $STAGE samples graph" width="100%" />
+<!--img src="./$STAGE_GRAPH_BASENAME" alt="Stage $STAGE samples graph" width="100%" /-->
+<object data="./$STAGE_GRAPH_BASENAME"></object>
 <div style="font-weight:bold">
 Stage $STAGE samples graph</div>
 </div>
@@ -306,7 +311,8 @@ SUMMARY_REPORT=$( cat << EOF
 <h2>Summary</h1>
 
 <div class="image" style="text-align:center">
-<img src="./$REPORT_GRAPH_BASENAME" alt="Summary statistics graph" width="100%" />
+<!--img src="./$REPORT_GRAPH_BASENAME" alt="Summary statistics graph" width="100%" /-->
+<object data="./$REPORT_GRAPH_BASENAME"></object>
 <div style="font-weight:bold">
 Summary statistics graph</div>
 </div>
