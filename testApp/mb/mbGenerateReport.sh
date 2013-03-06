@@ -1,6 +1,7 @@
 #! /bin/bash
 
 COMMAND=`basename $0`
+FULL_CMD_LINE="$0 $*"
 
 # environment variables
 # MB_OUTPUT_DIR
@@ -121,6 +122,53 @@ for FILE in $PROCESS_LIST
 do
     echo "Processing $FILE..."
 
+    NAME=`basename $FILE | cut -d '_' -f 2 | cut -d '.' -f 1`
+    DATE=`date`
+    HTML_FILE="$FILE.html"
+
+HTML_HEADER=$( cat << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="keywords"
+  content="EPICS, EPICSv4, performance, benchmark, report" />
+  <title>$NAME micro-benchmark report</title>
+  <link rel="stylesheet" type="text/css" href="base.css" />
+  <link rel="stylesheet" type="text/css" href="epicsv4.css" />
+  <style type="text/css">
+/*<![CDATA[*/
+     .about { margin-left: 3em; margin-right: 3em; font-size: .83em}
+     table { margin-left: auto; margin-right: auto }
+     .diagram { text-align: center; margin: 2.5em 0 }
+p.ed.priv { display: none }
+span.ed.priv { display: none }
+/*]]>*/</style>
+<!-- p and span class "ed priv" is used to specify private editor class. Private -->
+<!-- editor class are not displayed when display: none. Turn them to visible with -->
+<!-- display: inline. -->
+</head>
+
+<body>
+
+<div class="head">
+<h1>$NAME micro-benchmark report</h1>
+<p>
+This report was generated at $DATE using the following command-line:
+</p>
+<pre>
+    $FULL_CMD_LINE
+</pre>
+
+<hr />
+</div>
+
+EOF
+)
+    echo $HTML_HEADER > $HTML_FILE
+
     echo "    Determining number of stages..."
     # get stages, skip 0 stage
     STAGES=`cat $FILE | cut -d ',' -f 2 | sort -u -n | grep -v '^0'`
@@ -147,14 +195,20 @@ do
         echo $STAT >> $STAT_FILE
 
         MIN_Y=`echo $STAT | cut -d ' ' -f 2`
+        LO_QUART_Y=`echo $STAT | cut -d ' ' -f 3`
         MEAN_Y=`echo $STAT | cut -d ' ' -f 4`
         STDDEV_Y=`echo $STAT | cut -d ' ' -f 5`
+        UP_QUART_Y=`echo $STAT | cut -d ' ' -f 6`
         MAX_Y=`echo $STAT | cut -d ' ' -f 7`
+
+        #STAGE_GRAPH="$STAGE_FILE.png"
+        STAGE_GRAPH="$STAGE_FILE.svg"
 
         #ITERATIONS=`cat $STAGE_FILE | wc -l`
         gnuplot << EOF
-        set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
-        set output '$STAGE_FILE.png'
+        #set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
+        set terminal svg enhanced font "arial,10" size 1024, 768
+        set output '$STAGE_GRAPH'
 
         set datafile separator ","
         set title "Stage $STAGE sampling"
@@ -163,6 +217,58 @@ do
              $MEAN_Y w l lt 3 title "mean", \
              '$STAGE_FILE' using 3 w p pt 7 lt 1 ps 1 notitle
 EOF
+
+
+STAGE_STATS=$( cat << EOF
+<tr>
+  <td>$MIN_Y</td>
+  <td>$LO_QUART_Y</td>
+  <td>$MEAN_Y</td>
+  <td>$STDDEV_Y</td>
+  <td>$UP_QUART_Y</td>
+  <td>$MAX_Y</td>
+</tr>
+EOF
+)
+SUMMARY_STATS="$SUMMARY_STATS $STAGE_STATS"
+
+STAGE_GRAPH_BASENAME=`basename $STAGE_GRAPH`
+STAGE_REPORT=$( cat << EOF
+
+<div>
+<h2>Stage $STAGE</h1>
+
+<div class="image" style="text-align:center">
+<img src="./$STAGE_GRAPH_BASENAME" alt="Stage $STAGE samples graph" width="100%" />
+<div style="font-weight:bold">
+Stage $STAGE samples graph</div>
+</div>
+
+<table style="caption-side:bottom">
+  <caption style="font-weight:bold; padding:1em">Stage $STAGE samples statistics</caption>
+  <tbody>
+    <tr>
+      <th>min</th>
+      <th>lower quartile</th>
+      <th>mean</th>
+      <th>stddev</th>
+      <th>upper quatrile</th>
+      <th>max</th>
+    </tr>
+    $STAGE_STATS
+  </tbody>
+</table>
+
+</div>
+
+EOF
+)
+    echo $STAGE_REPORT >> $HTML_FILE
+
+
+
+
+
 
         echo "      done."
     done
@@ -173,10 +279,14 @@ EOF
         exit 5
     fi
 
+    #REPORT_GRAPH="$FILE.png"
+    REPORT_GRAPH="$FILE.svg"
+
     echo "    Generating report..."
     gnuplot << EOF
-    set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
-    set output '$FILE.png'
+    #set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
+    set terminal svg enhanced font "arial,10" size 1024, 768
+    set output '$REPORT_GRAPH'
 
     set boxwidth 0.2 absolute
     set title "min/lo quartile/mean/hi quartile/max per stage"
@@ -184,8 +294,53 @@ EOF
     plot '$STAT_FILE' using 1:3:2:7:6:xticlabels(1) with candlesticks lt 3 lw 2 title 'Quartiles' whiskerbars, \
          ''         using 1:4:4:4:4 with candlesticks lt -1 lw 2 notitle
 EOF
+
+
+
+
+
+REPORT_GRAPH_BASENAME=`basename $REPORT_GRAPH`
+SUMMARY_REPORT=$( cat << EOF
+
+<div>
+<h2>Summary</h1>
+
+<div class="image" style="text-align:center">
+<img src="./$REPORT_GRAPH_BASENAME" alt="Summary statistics graph" width="100%" />
+<div style="font-weight:bold">
+Summary statistics graph</div>
+</div>
+
+<table style="caption-side:bottom">
+  <caption style="font-weight:bold; padding:1em">Summary statistics</caption>
+  <tbody>
+    <tr>
+      <th>min</th>
+      <th>lower quartile</th>
+      <th>mean</th>
+      <th>stddev</th>
+      <th>upper quatrile</th>
+      <th>max</th>
+    </tr>
+    $SUMMARY_STATS
+  </tbody>
+</table>
+
+</div>
+
+EOF
+)
+    echo $SUMMARY_REPORT >> $HTML_FILE
+
+
+
+
+
+
     echo "      done."
 
+
+    echo "  </body></html>" >> $HTML_FILE
 
     echo "  done."
 done
