@@ -6,11 +6,13 @@ COMMAND=`basename $0`
 # MB_OUTPUT_DIR
 # MB_REPORT_DIR
 
+IGNORE_FIRST_N=0
+
 ###
 ### ------------ Command Line Parsing ------------
 ###
-LONGOPTS=help,output_dir:,report_dir:
-SHORTOPTS=ho:r:
+LONGOPTS=help,output_dir:,report_dir:,ignore_first_n:
+SHORTOPTS=ho:r:i:
 
 #
 # Usage help.
@@ -23,6 +25,7 @@ Usage $COMMAND [OPTIONS]
 Options:
     -o | --output_dir        directory where .csv files are located, overrides MB_OUTPUT_DIR and current directory
     -r | --report_dir        directory where to put generated HTML report, overrides MB_REPORT_DIR and current directory
+    -i | --ignore_first_n    ignore first n samples
     -h | --help              prints this help and exits
 
 EOF
@@ -40,13 +43,15 @@ set -- `getopt -u -a -l $LONGOPTS $SHORTOPTS "$@"`
 while :
 do
     case "$1" in
-        --output_dir)   MB_OUTPUT_DIR=$2 ; shift ;;
-        -o)             MB_OUTPUT_DIR=$2 ; shift ;;
-        --report_dir)   MB_REPORT_DIR=$2 ; shift ;;
-        -r)             MB_REPORT_DIR=$2 ; shift ;;
-        --help)         printUsage ; exit 0 ;;
-        -h)             printUsage ; exit 0 ;;
-        --)             if [ X"$2" != X ] ; then printUsage ; exit 2 ; fi ; break ;;
+        --output_dir)      MB_OUTPUT_DIR=$2 ; shift ;;
+        -o)                MB_OUTPUT_DIR=$2 ; shift ;;
+        --report_dir)      MB_REPORT_DIR=$2 ; shift ;;
+        -r)                MB_REPORT_DIR=$2 ; shift ;;
+        --ignore_first_n)  IGNORE_FIRST_N=$2 ; shift ;;
+        -i)                IGNORE_FIRST_N=$2 ; shift ;;
+        --help)            printUsage ; exit 0 ;;
+        -h)                printUsage ; exit 0 ;;
+        --)                if [ X"$2" != X ] ; then printUsage ; exit 2 ; fi ; break ;;
     esac
     shift
 done
@@ -56,6 +61,14 @@ unset POSIXLY_CORRECT
 ###
 ### ------------ Arguments Checking and Setup ------------
 ###
+
+# Put the RE in a var for backward compatibility with versions <3.2
+intregexp='^[0-9]*$'
+if [[ ! $IGNORE_FIRST_N =~ $intregexp ]]
+then
+    echo "IGNORE_FIRST_N='$IGNORE_FIRST_N' is not a valid positive number"
+    exit 1
+fi
 
 if [ X"$MB_OUTPUT_DIR" = X ]
 then
@@ -70,7 +83,7 @@ fi
 if [ ! -d $MB_OUTPUT_DIR ]
 then
     echo "MB_OUTPUT_DIR directory '$MB_OUTPUT_DIR' does not exists."
-    exit 2;
+    exit 2
 fi
 
 if [ ! -d $MB_REPORT_DIR ]
@@ -117,48 +130,59 @@ do
     STAT_FILE="$FILE.stat"
     rm $STAT_FILE 2> /dev/null
 
+    IGNORE_FIRST_N_PLUS_ONE=`expr $IGNORE_FIRST_N + 1`
+
     for STAGE in $STAGES
     do
         echo "    Processing stage $STAGE of $STAGE_COUNT..."
-        # TODO configurable
-        IGNORE_FIRST_N=0
 
         STAGE_FILE="$FILE.$STAGE"
-        mb_stat $FILE -n -s $STAGE -i $IGNORE_FIRST_N > $STAGE_FILE
-        gnuplot -e "set print \"-\"; set datafile separator \",\"; stat \"$STAGE_FILE\" using 3 prefix \"s0\" nooutput; print $STAGE, s0_min, s0_lo_quartile, s0_mean, s0_stddev, s0_up_quartile, s0_max" >> $STAT_FILE
+        mb_stat $FILE -n -s $STAGE | tail -n +$IGNORE_FIRST_N_PLUS_ONE > $STAGE_FILE
+        if [ ! -s $STAGE_FILE ]
+        then
+            echo "Stage $STAGE contains no samples, skipping..."
+            continue
+        fi
+        STAT=`gnuplot -e "set print \"-\"; set datafile separator \",\"; stat \"$STAGE_FILE\" using 3 prefix \"s0\" nooutput; print $STAGE, s0_min, s0_lo_quartile, s0_mean, s0_stddev, s0_up_quartile, s0_max"`
+        echo $STAT >> $STAT_FILE
+
+        MIN_Y=`echo $STAT | cut -d ' ' -f 2`
+        MEAN_Y=`echo $STAT | cut -d ' ' -f 4`
+        STDDEV_Y=`echo $STAT | cut -d ' ' -f 5`
+        MAX_Y=`echo $STAT | cut -d ' ' -f 7`
 
         #ITERATIONS=`cat $STAGE_FILE | wc -l`
         gnuplot << EOF
-        set terminal pngcairo transparent enhanced font "arial,10" fontscale 1.0 size 1024, 768
+        set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
         set output '$STAGE_FILE.png'
 
         set datafile separator ","
         set title "Stage $STAGE sampling"
-        #plot mean_y-stddev_y with filledcurves y1=mean_y lt 1 lc rgb "#bbbbdd", \
-        #     mean_y+stddev_y with filledcurves y1=mean_y lt 1 lc rgb "#bbbbdd", \
-        #     mean_y w l lt 3, 'stats2.dat' u 1:2 w p pt 7 lt 1 ps 1
-        plot '$STAGE_FILE' using 3 w p pt 7 lt 1 ps 1 notitle
+        plot $MEAN_Y-$STDDEV_Y with filledcurves y1=$MEAN_Y lt 1 lc rgb "#bbbbdd" title "stddev range", \
+             $MEAN_Y+$STDDEV_Y with filledcurves y1=$MEAN_Y lt 1 lc rgb "#bbbbdd" notitle, \
+             $MEAN_Y w l lt 3 title "mean", \
+             '$STAGE_FILE' using 3 w p pt 7 lt 1 ps 1 notitle
 EOF
 
         echo "      done."
     done
 
+    if [ ! -s $STAT_FILE ]
+    then
+        echo "Statistics file contains no data, exiting..."
+        exit 5
+    fi
+
     echo "    Generating report..."
     gnuplot << EOF
-    set terminal pngcairo transparent enhanced font "arial,10" fontscale 1.0 size 1024, 768
+    set terminal pngcairo enhanced font "arial,10" fontscale 1.0 size 1024, 768
     set output '$FILE.png'
-
-
-    set bars front
-    by3(x) = (((int(x)%3)+1)/6.)
-    by4(x) = (((int(x)%4)+1)/7.)
-    rgbfudge(x) = x*51*32768 + (11-x)*51*128 + int(abs(5.5-x)*510/9.)
 
     set boxwidth 0.2 absolute
     set title "min/lo quartile/mean/hi quartile/max per stage"
-    set xrange [ 0 : $STAGE_COUNT ] noreverse nowriteback
-    plot '$STAT_FILE' using 1:3:2:7:6:1 with candlesticks lc var fs solid 0.5 noborder title 'Quartiles' whiskerbars, \
-         ''         using 1:4:4:4:4:1 with candlesticks lc var fs solid 0.5 noborder notitle
+    set xrange [ 0 : $STAGE_COUNT+1 ] noreverse nowriteback
+    plot '$STAT_FILE' using 1:3:2:7:6:xticlabels(1) with candlesticks lt 3 lw 2 title 'Quartiles' whiskerbars, \
+         ''         using 1:4:4:4:4 with candlesticks lt -1 lw 2 notitle
 EOF
     echo "      done."
 

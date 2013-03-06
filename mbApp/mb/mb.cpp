@@ -48,32 +48,41 @@ void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage)
     p.time = MBTime();
 }
 
+// NOTE: requires that samples are ordered by iteration (not by stage!) first
 void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o)
 {
     std::size_t iterationCount = 0;
-    const std::size_t len = e.pos.load(); 
-    for (std::size_t i = 0; i < len; i++)
+    const std::size_t len = e.pos.load();
+    if (stageOnly == 0)
     {
-        MBPoint& p = e.points[i];
-
-        // first stage is start time, skip
-        if (p.stage == 0)
+        // export all
+        for (std::size_t i = 0; i < len; i++)
         {
-            // new first stage means new iteration
-            iterationCount++;
-            // do not skip here
+            MBPoint& p = e.points[i];
+            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
         }
+    }
+    else
+    {
+        for (std::size_t i = 0; i < len; i++)
+        {
+            MBPoint& p = e.points[i];
 
-        // process only one stage, if stageOnly is not 0
-        if (stageOnly != 0 && stageOnly != p.stage)
-            continue;
+            // new first stage means new iteration
+            if (p.stage == 0)
+                iterationCount++;
 
-        // skip fist N iterations
-        // NOTE: we assume stages (iterations) are ordered
-        if (iterationCount <= skipFirstNSamples)
-            continue;
+            // select stage
+            if (stageOnly != p.stage)
+                continue;
 
-        o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
+            // skip fist N iterations
+            // NOTE: we assume stages (iterations) are ordered
+            if (iterationCount <= skipFirstNSamples)
+                continue;
+
+            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
+        }
     }
 }
 
@@ -187,6 +196,7 @@ struct MBStatistics
 
 typedef std::map<uint8_t, MBStatistics> StatsMapPerStage;
 
+// NOTE: requires that samples are ordered by iteration (not by stage!) first
 void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o)
 {
     MBNormalize(e);
