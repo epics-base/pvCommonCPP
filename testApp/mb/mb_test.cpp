@@ -8,9 +8,9 @@ int main()
 {
     MB_INIT;
     
-    for (int i = 0; i < 1000; i++)
-        for (int j = 0; j < 10; j++)
-            MB_POINT_ID(test, i, j);
+    for (int id = 0; id < 1000; id++)
+        for (int stage = 0; stage < 10; stage++)
+            MB_POINT_ID(test, stage, "stage desc", id);
 
     return 0;
 }
