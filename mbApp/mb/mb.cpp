@@ -196,11 +196,15 @@ struct MBStatistics
 
 typedef std::map<uint8_t, MBStatistics> StatsMapPerStage;
 
-// NOTE: requires that samples are ordered by iteration (not by stage!) first
+// NOTE: requires that samples are ordered by iteration (not by stage!) first, i.e.
+// fist all the stages of iteration 0, then iteration 1, etc.
 void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o)
 {
     MBNormalize(e);
     
+    MBStatistics overallStats;
+    uint64_t iterationSum = 0;
+
     StatsMapPerStage stats;
     std::size_t iterationCount = 0;
 
@@ -215,6 +219,12 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
         {
             // new first stage means new iteration
             iterationCount++;
+
+            if (iterationCount > 1)
+            {
+                overallStats.addSample(iterationSum);
+                iterationSum = 0;
+            }
             continue;
         }
         // process only one stage, if stageOnly is not 0
@@ -225,6 +235,8 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
         // NOTE: we assume stages (iterations) are ordered
         if (iterationCount <= skipFirstNSamples)
             continue;
+
+        iterationSum += p.time;
 
         StatsMapPerStage::iterator s = stats.find(p.stage);
         if (s == stats.end())
@@ -239,6 +251,13 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
         i->second.pass1Epilogue();
 
 
+    overallStats.addSample(iterationSum);
+    overallStats.pass1Epilogue();
+    iterationSum = 0;
+
+    bool dumpOverallTimesOnly = (stageOnly > stats.size());
+    if (dumpOverallTimesOnly)
+        stageOnly = 0;
 
     iterationCount = 0;
 
@@ -252,6 +271,15 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
         {
             // new first stage means new iteration
             iterationCount++;
+
+            if (iterationCount > 1)
+            {
+                if (dumpOverallTimesOnly)
+                    std::cout << iterationSum << std::endl;
+
+                overallStats.addSamplePass2(iterationSum);
+                iterationSum = 0;
+            }
             continue;
         }
         // process only one stage, if stageOnly is not 0
@@ -263,6 +291,8 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
         if (iterationCount <= skipFirstNSamples)
             continue;
 
+        iterationSum += p.time;
+
         stats[p.stage].addSamplePass2(p.time);
     }
 
@@ -271,21 +301,21 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
          i++)
         i->second.pass2Epilogue();
 
+    overallStats.addSamplePass2(iterationSum);
+    overallStats.pass2Epilogue();
 
-    uint64_t smin = 0;
-    uint64_t smax = 0;
-    double smean = 0;
-    double sstdev = 0;
+    if (dumpOverallTimesOnly)
+    {
+        std::cout << iterationSum << std::endl;
+        return;
+    }
+
+    o << std::endl;
 
     for (StatsMapPerStage::iterator i = stats.begin();
          i != stats.end();
          i++)
     {
-        smin += i->second.min;
-        smax += i->second.max;
-        smean += i->second.mean;
-        sstdev += i->second.stdev;
-
         o << "stage " << std::setw(3) << static_cast<uint32_t>(i->first)
                       << ": min = " << std::setw(9) << i->second.min
                       << ", max = " << std::setw(9) << i->second.max
@@ -295,11 +325,14 @@ void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std:
     
     o << std::string(80,'-') << std::endl;
     
-    o << "stage " << std::setw(3) << "sum"
-                    << ": min = " << std::setw(9) << smin
-                    << ", max = " << std::setw(9) << smax
-                    << ", mean = " << std::setw(9) << static_cast<uint64_t>(smean)
-                    << ", stdev = " << std::setw(9) << static_cast<uint64_t>(sstdev) << std::endl;
+    o << "iteration"
+                  << ": min = " << std::setw(9) << overallStats.min
+                  << ", max = " << std::setw(9) << overallStats.max
+                  << ", mean = " << std::setw(9) << static_cast<uint64_t>(overallStats.mean)
+                  << ", stdev = " << std::setw(9) << static_cast<uint64_t>(overallStats.stdev) << std::endl;
+    double ips = (1000000000L/overallStats.mean);
+    double sdips = ips - (1000000000L/(overallStats.mean+overallStats.stdev));
+    o << std::endl << std::setprecision(9) << ips << " +/- " << sdips << " iteration(s)/sec" << std::endl << std::endl;
 }
 
 typedef std::vector<MBEntity*> EntitiesVector;

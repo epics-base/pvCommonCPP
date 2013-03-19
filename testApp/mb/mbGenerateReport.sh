@@ -118,6 +118,9 @@ then
     exit 4
 fi
 
+# number format
+FORMAT="%.3f"
+
 for FILE in $PROCESS_LIST
 do
     echo "Processing $FILE..."
@@ -156,7 +159,7 @@ span.ed.priv { display: none }
 <div class="head">
 <h1>$NAME micro-benchmark report</h1>
 <p>
-This report was generated at $DATE using the following command-line:
+This report was generated on $DATE using the following command-line:
 </p>
 <pre>
     $FULL_CMD_LINE
@@ -205,6 +208,14 @@ EOF
         UP_QUART_Y=`echo $STAT | cut -d ' ' -f 6`
         MAX_Y=`echo $STAT | cut -d ' ' -f 7`
 
+        # format
+        MIN_Y=`printf $FORMAT $MIN_Y`
+        LO_QUART_Y=`printf $FORMAT $LO_QUART_Y`
+        MEAN_Y=`printf $FORMAT $MEAN_Y`
+        STDDEV_Y=`printf $FORMAT $STDDEV_Y`
+        UP_QUART_Y=`printf $FORMAT $UP_QUART_Y`
+        MAX_Y=`printf $FORMAT $MAX_Y`
+
         #STAGE_GRAPH="$STAGE_FILE.png"
         STAGE_GRAPH="$STAGE_FILE.svg"
 
@@ -225,12 +236,13 @@ EOF
 
 STAGE_STATS=$( cat << EOF
 <tr>
-  <td>$MIN_Y</td>
-  <td>$LO_QUART_Y</td>
-  <td>$MEAN_Y</td>
-  <td>$STDDEV_Y</td>
-  <td>$UP_QUART_Y</td>
-  <td>$MAX_Y</td>
+  <td style="text-align:right">$STAGE</td>
+  <td style="text-align:right">$MIN_Y</td>
+  <td style="text-align:right">$LO_QUART_Y</td>
+  <td style="text-align:right">$MEAN_Y</td>
+  <td style="text-align:right">$STDDEV_Y</td>
+  <td style="text-align:right">$UP_QUART_Y</td>
+  <td style="text-align:right">$MAX_Y</td>
 </tr>
 EOF
 )
@@ -250,9 +262,10 @@ Stage $STAGE samples graph</div>
 </div>
 
 <table style="caption-side:bottom">
-  <caption style="font-weight:bold; padding:1em">Stage $STAGE samples statistics</caption>
+  <caption style="font-weight:bold; padding:1em">Stage $STAGE samples statistics table</caption>
   <tbody>
     <tr>
+      <th>stage</th>
       <th>min</th>
       <th>lower quartile</th>
       <th>mean</th>
@@ -269,7 +282,6 @@ Stage $STAGE samples graph</div>
 EOF
 )
     echo $STAGE_REPORT >> $HTML_FILE
-
 
 
 
@@ -303,6 +315,56 @@ EOF
 
 
 
+# overrall stats
+STAGE_COUNT_PLUS_ONE=`expr $STAGE_COUNT + 1`
+
+ITERATION_FILE="$FILE.iteration"
+
+FILE_BY_ITER="$FILE.by_iter"
+cat $FILE | sort -t ',' -n -k1 > $FILE_BY_ITER
+
+mb_stat $FILE_BY_ITER -s $STAGE_COUNT_PLUS_ONE | tail -n +$IGNORE_FIRST_N_PLUS_ONE > $ITERATION_FILE
+STAT=`gnuplot -e "set print \"-\"; stat \"$ITERATION_FILE\" using 1 prefix \"s0\" nooutput; print \"iteration \", s0_min, s0_lo_quartile, s0_mean, s0_stddev, s0_up_quartile, s0_max"`
+
+MIN_Y=`echo $STAT | cut -d ' ' -f 2`
+LO_QUART_Y=`echo $STAT | cut -d ' ' -f 3`
+MEAN_Y=`echo $STAT | cut -d ' ' -f 4`
+STDDEV_Y=`echo $STAT | cut -d ' ' -f 5`
+UP_QUART_Y=`echo $STAT | cut -d ' ' -f 6`
+MAX_Y=`echo $STAT | cut -d ' ' -f 7`
+
+IPS=`gnuplot -e "set print \"-\"; print 1000000000.0/$MEAN_Y"`
+IPS_STDDEV=`gnuplot -e "set print \"-\"; print $IPS-1000000000.0/($MEAN_Y+$STDDEV_Y)"`
+
+# format
+MIN_Y=`printf $FORMAT $MIN_Y`
+LO_QUART_Y=`printf $FORMAT $LO_QUART_Y`
+MEAN_Y=`printf $FORMAT $MEAN_Y`
+STDDEV_Y=`printf $FORMAT $STDDEV_Y`
+UP_QUART_Y=`printf $FORMAT $UP_QUART_Y`
+MAX_Y=`printf $FORMAT $MAX_Y`
+
+IPS=`printf $FORMAT $IPS`
+IPS_STDDEV=`printf $FORMAT $IPS_STDDEV`
+
+ITERATION_STATS=$( cat << EOF
+<tr>
+  <td style="text-align:right;font-weight:bold">iteration</td>
+  <td style="text-align:right;font-weight:bold">$MIN_Y</td>
+  <td style="text-align:right;font-weight:bold">$LO_QUART_Y</td>
+  <td style="text-align:right;font-weight:bold">$MEAN_Y</td>
+  <td style="text-align:right;font-weight:bold">$STDDEV_Y</td>
+  <td style="text-align:right;font-weight:bold">$UP_QUART_Y</td>
+  <td style="text-align:right;font-weight:bold">$MAX_Y</td>
+</tr>
+EOF
+)
+SUMMARY_STATS="$SUMMARY_STATS $ITERATION_STATS"
+
+
+
+
+
 
 REPORT_GRAPH_BASENAME=`basename $REPORT_GRAPH`
 SUMMARY_REPORT=$( cat << EOF
@@ -318,9 +380,10 @@ Summary statistics graph</div>
 </div>
 
 <table style="caption-side:bottom">
-  <caption style="font-weight:bold; padding:1em">Summary statistics</caption>
+  <caption style="font-weight:bold; padding:1em">Summary statistics table</caption>
   <tbody>
     <tr>
+      <th>stage</th>
       <th>min</th>
       <th>lower quartile</th>
       <th>mean</th>
@@ -334,12 +397,11 @@ Summary statistics graph</div>
 
 </div>
 
+<p style="font-size:+1">This results in $IPS +- $IPS_STDDEV iteration(s)/second.</p>
+</p>
 EOF
 )
     echo $SUMMARY_REPORT >> $HTML_FILE
-
-
-
 
 
 
