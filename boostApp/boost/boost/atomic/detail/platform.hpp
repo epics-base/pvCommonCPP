@@ -26,7 +26,11 @@
 
 #elif defined(__GNUC__) && (defined(__POWERPC__) || defined(__PPC__))
 
+#if __GNUC__ < 3
+    #include <boost/atomic/detail/gcc2-ppc.hpp>
+#else
     #include <boost/atomic/detail/gcc-ppc.hpp>
+#endif
 
 // This list of ARM architecture versions comes from Apple's arm/arch.h header.
 // I don't know how complete it is.
