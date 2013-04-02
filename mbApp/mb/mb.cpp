@@ -59,7 +59,7 @@ void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, 
         for (std::size_t i = 0; i < len; i++)
         {
             MBPoint& p = e.points[i];
-            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
+            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << static_cast<int64_t>(p.time) << std::endl;
         }
     }
     else
@@ -81,7 +81,7 @@ void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, 
             if (iterationCount <= skipFirstNSamples)
                 continue;
 
-            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << p.time << std::endl;
+            o << p.id << ',' << static_cast<uint32_t>(p.stage) << ',' << static_cast<int64_t>(p.time) << std::endl;
         }
     }
 }
