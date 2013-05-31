@@ -39,7 +39,7 @@ uint64_t MBTime()
 #define GETPID() getpid()
 #endif
 
-void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage)
+void MBPointAdd(MBEntity &e, std::ptrdiff_t id, uint8_t stage)
 {
     // no copy and no MBPoint init solution
     const std::size_t ix = e.pos.fetch_add(1);
@@ -115,7 +115,7 @@ void MBCSVImport(MBEntity &e, std::istream &i)
 
 void MBNormalize(MBEntity &e)
 {
-    std::map<intptr_t, uint64_t> lastTime;
+    std::map<std::ptrdiff_t, uint64_t> lastTime;
     
     const std::size_t len = e.pos.load(); 
     for (std::size_t i = 0; i < len; i++)
@@ -124,7 +124,7 @@ void MBNormalize(MBEntity &e)
         if (p.stage == 0)
             lastTime[p.id] = p.time;
             
-        std::map<intptr_t, uint64_t>::iterator last = lastTime.find(p.id);
+        std::map<std::ptrdiff_t, uint64_t>::iterator last = lastTime.find(p.id);
         if (last == lastTime.end())
         {
             std::cerr << "no 0 stage for " << e.name << ", id = " << p.id << std::endl;

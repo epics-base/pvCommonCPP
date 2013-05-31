@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <stdint.h>
 
 #include <iostream>
 
@@ -21,12 +20,12 @@ static class MBMutexInitializer {
 
 struct MBPoint
 {
-    intptr_t id;
+    std::ptrdiff_t id;
     uint8_t stage;
     uint64_t time;
     
     MBPoint() {}
-    MBPoint(intptr_t _id, uint8_t _stage) : id(_id), stage(_stage) {}
+    MBPoint(std::ptrdiff_t _id, uint8_t _stage) : id(_id), stage(_stage) {}
 };
 
 struct MBEntity;
@@ -40,7 +39,7 @@ struct MBEntity
     std::string name;
     MBPointType points;
     boost::atomic<std::size_t> pos;
-    boost::atomic<intptr_t> auto_id;
+    boost::atomic<std::ptrdiff_t> auto_id;
 
     MBEntity(const std::string &name_, std::size_t size) : name(name_)
     {
@@ -55,7 +54,7 @@ struct MBEntity
 
 extern uint64_t MBTime();
 
-extern void MBPointAdd(MBEntity &e, intptr_t id, uint8_t stage);
+extern void MBPointAdd(MBEntity &e, std::ptrdiff_t id, uint8_t stage);
 
 extern void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
 extern void MBCSVImport(MBEntity &e, std::istream &i);
