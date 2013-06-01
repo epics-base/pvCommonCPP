@@ -1,4 +1,4 @@
-#include "mb.h"
+include "mb.h"
 
 #include <time.h>
 #include <map>
@@ -34,7 +34,7 @@ uint64_t MBTime()
 #endif
 
 #ifdef vxWorks
-#include <vxworks.h>
+#include <vxWorks.h>
 #define GETPID() taskIdSelf()
 #else
 #define GETPID() getpid()
