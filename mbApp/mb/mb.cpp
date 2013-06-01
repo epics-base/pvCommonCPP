@@ -34,6 +34,7 @@ uint64_t MBTime()
 #endif
 
 #ifdef vxWorks
+#include <vxworks.h>
 #define GETPID() taskIdSelf()
 #else
 #define GETPID() getpid()
