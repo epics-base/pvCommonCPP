@@ -1,5 +1,7 @@
 #include "mb.h"
 
+#ifdef PV_MB
+
 #include <time.h>
 #include <map>
 #include <math.h>
@@ -453,3 +455,4 @@ void MBInit()
     }
 }
 
+#endif

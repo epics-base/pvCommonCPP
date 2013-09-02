@@ -1,7 +1,7 @@
 #ifndef _MB_H_
 #define _MB_H_
 
-#if PV_MB
+#ifdef PV_MB
 
 #include <string>
 #include <vector>
