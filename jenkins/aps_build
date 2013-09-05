@@ -18,7 +18,7 @@ cat > configure/RELEASE.local << EOF
 EPICS_BASE=${EPICS_BASE}
 EOF
 
-make distclean all
+make
 
 ###########################################
 # Test
