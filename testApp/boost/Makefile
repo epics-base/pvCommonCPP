@@ -2,10 +2,10 @@ TOP=../..
 
 include $(TOP)/configure/CONFIG
 
+USR_CXXFLAGS_WIN32 += -DBOOST_ALL_NO_LIB
+
 PROD_HOST += testBoost 
-#test_CXXFLAGS += -DPV_MB
 testBoost_SRCS += testBoost.cpp
-#testBoost_LIBS +=
 
 include $(TOP)/configure/RULES
 #----------------------------------------
