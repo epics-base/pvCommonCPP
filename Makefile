@@ -1,14 +1,17 @@
-#Makefile at top of application tree
+# Makefile for the EPICS V4 pvCommon module
+
 TOP = .
 include $(TOP)/configure/CONFIG
-DIRS += configure
+
+DIRS := configure
+
 DIRS += boostApp
 boostApp_DEPEND_DIRS = configure
+
 DIRS += mbApp
-mbApp_DEPEND_DIRS = configure boostApp
+mbApp_DEPEND_DIRS = boostApp
+
 DIRS += testApp
-testApp_DEPEND_DIRS = boostApp mbApp
+testApp_DEPEND_DIRS = mbApp
 
 include $(TOP)/configure/RULES_TOP
-
-
