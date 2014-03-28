@@ -8,10 +8,10 @@ DIRS := configure
 DIRS += boostApp
 boostApp_DEPEND_DIRS = configure
 
-DIRS += mbApp
-mbApp_DEPEND_DIRS = boostApp
+DIRS += mbSrc
+mbSrc_DEPEND_DIRS = boostApp
 
 DIRS += testApp
-testApp_DEPEND_DIRS = mbApp
+testApp_DEPEND_DIRS = mbSrc
 
 include $(TOP)/configure/RULES_TOP
