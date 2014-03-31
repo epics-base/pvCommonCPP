@@ -44,7 +44,7 @@ void usage (void)
     fprintf (stderr, "\nUsage: mb_stat [options] <micro-benchmark .csv filename>\n\n"
     "  -h: Help: Print this message\n"
     "\noptions:\n"
-    "  -s <stage>:          Process only selected stage, valid range: (0..255].\n"
+    "  -s <stage>:          Process only selected stage, in range 1..255\n"
     "  -i <# of samples>:   Ignore first n samples, defaults to 0.\n"
     "  -n:                  Normalize timestamp (convert timestamps to time spent per stage).\n"
     "\n"
@@ -56,7 +56,7 @@ MB_DECLARE(importCSV, 64000);
 int main(int argc, char** argv)
 {
     int opt;                    /* getopt() current option */
-    uint8_t stageOnly = 0; /* default is all, 0 stage is not valid option */
+    int stageOnly = 0; /* default is all, 0 stage is not valid option */
     std::size_t ignoreFirstNSamples = 0; /* default is not to ignore anything */
     bool normalizeOnly = false; /* default is to point statistics */
 
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
                         "- ignored. ('mb_stat -h' for help.)\n", optarg);
             }
             else
-                stageOnly = static_cast<std::size_t>(sv);
+                stageOnly = sv;
             break;
         case 'i':               /* Ignore first N samples */
             long iv;
