@@ -1,6 +1,6 @@
 #include "mb.h"
 
-#ifdef PV_MB
+#ifdef WITH_MICROBENCH
 
 #include <time.h>
 #include <map>

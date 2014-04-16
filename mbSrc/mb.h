@@ -1,10 +1,14 @@
 #ifndef _MB_H_
 #define _MB_H_
 
-#ifdef PV_MB
+#ifdef WITH_MICROBENCH
 
 #include <string>
 #include <vector>
+
+#ifndef vxWorks
+#  include <inttypes.h>
+#endif
 
 #include <iostream>
 
