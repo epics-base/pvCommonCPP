@@ -86,6 +86,7 @@ else
         INC += boost/atomic.hpp
         INC += boost/config/no_tr1/cmath.hpp
         INC += boost/config/platform/linux.hpp
+        INC += boost/config/platform/win32.hpp
         INC += boost/config/stdlib/libstdcpp3.hpp
         INC += boost/cstdint.hpp
         INC += boost/detail/container_fwd.hpp

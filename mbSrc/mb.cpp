@@ -23,15 +23,18 @@ uint64_t MBTime()
     return mach_absolute_time();
 }
 #else
-//#include <sys/time.h>
+#include <sys/time.h>
 uint64_t MBTime()
 {
+#ifdef CLOCK_REALTIME
      struct timespec ts;
      clock_gettime(CLOCK_REALTIME, &ts);
      return static_cast<uint64_t>(ts.tv_sec) * 1000000000 + static_cast<uint64_t>(ts.tv_nsec);
-//     struct timeval tv;
-//     gettimeofday(&tv, NULL);
-//     return static_cast<uint64_t>(tv.tv_sec) * 1000000000 + static_cast<uint64_t>(tv.tv_usec) * 1000;
+#else
+     struct timeval tv;
+     gettimeofday(&tv, NULL);
+     return static_cast<uint64_t>(tv.tv_sec) * 1000000000 + static_cast<uint64_t>(tv.tv_usec) * 1000;
+#endif
 }
 #endif
 
