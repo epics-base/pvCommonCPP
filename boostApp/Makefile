@@ -55,6 +55,7 @@ else
     INC += boost/smart_ptr/detail/shared_count.hpp
     INC += boost/smart_ptr/detail/sp_convertible.hpp
     INC += boost/smart_ptr/detail/sp_counted_base_gcc_ppc.hpp
+    INC += boost/smart_ptr/detail/sp_counted_base_gcc_x86.hpp
     INC += boost/smart_ptr/detail/sp_counted_base.hpp
     INC += boost/smart_ptr/detail/sp_counted_impl.hpp
     INC += boost/smart_ptr/detail/sp_has_sync.hpp
