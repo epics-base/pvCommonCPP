@@ -26,7 +26,7 @@ CHECK_RELEASE = YES
 #WITH_COVERAGE = 1
 
 -include $(TOP)/configure/CONFIG_SITE.local
--include $(TOP)/../CONFIG.local
+-include $(TOP)/../CONFIG_SITE.local
 
 ifdef WITH_COVERAGE
 USR_CPPFLAGS += --coverage
