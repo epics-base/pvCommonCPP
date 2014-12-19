@@ -15,7 +15,7 @@
 DEFAULT_BASE=3.14.12.4
 
 BASE=${1:-${DEFAULT_BASE}}
-[ "${1}" = ${DEFAULT_BASE} -o -z "${1}" ] && BUILD_DOCS=YES
+[ x${1} = x${DEFAULT_BASE} -o x${1} = x ] && BUILD_DOCS=YES
 
 ###########################################
 # Fetch and unpack dependencies
@@ -51,7 +51,7 @@ WITH_MICROBENCH=1
 EOF
 
 make distclean all
-[ "${BUILD_DOCS}" ] && doxygen
+[ x${BUILD_DOCS} != x ] && doxygen
 
 ###########################################
 # Test
@@ -68,4 +68,4 @@ tar czf pvCommon.CB-dist.tar.gz lib include COPYRIGHT LICENSE
 ###########################################
 # Publish documentation
 
-[ "${BUILD_DOCS}" ] && rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/tip
+[ x${BUILD_DOCS} != x ] && rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/tip
