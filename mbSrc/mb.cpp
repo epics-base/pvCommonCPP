@@ -1,5 +1,3 @@
-#include "mb.h"
-
 #ifdef WITH_MICROBENCH
 
 #include <time.h>
@@ -14,6 +12,8 @@
 #include <iomanip>
 
 #include <epicsMutex.h>
+
+#include "mb.h"
 
 // TODO clean this up
 #if defined(__APPLE__)
