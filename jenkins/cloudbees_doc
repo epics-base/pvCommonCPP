@@ -10,6 +10,12 @@
 # All rights reserved. Use is subject to license terms.
 
 ###########################################
+# Set EPICS Base version and upload target
+
+BASE=3.15.2
+PUBLISH=${1:-DONT}
+
+###########################################
 # Fetch and unpack dependencies
 
 export STUFF=/tmp/stuff
@@ -26,7 +32,7 @@ tar -xzf doxygen-1.8.3.CB-dist.tar.gz
 
 cd ${WORKSPACE}
 
-wget -nv https://openepics.ci.cloudbees.com/job/pvCommonCPP_Build/BASE=${BASE}/lastSuccessfulBuild/artifact/pvCommon.CB-dist.tar.gz
+wget -nv https://openepics.ci.cloudbees.com/job/pvCommonCPP_Build/BASE=${BASE},USE_MB=MB_YES/lastSuccessfulBuild/artifact/pvCommon.CB-dist.tar.gz
 tar -xzf pvCommon.CB-dist.tar.gz
 
 export PATH=${STUFF}/bin:${PATH}
@@ -36,4 +42,10 @@ doxygen
 ###########################################
 # Publish
 
-rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/tip
+if [ "${PUBLISH}" != "DONT" ]; then
+    # Upload explicit dummy to ensure target directory exists
+    echo "Created by CloudBees Jenkins upload job. Should be deleted as part of the job." > DUMMY
+    rsync -q -e ssh DUMMY epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/${PUBLISH}/DUMMY
+
+    rsync -aqP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/${PUBLISH}/
+fi
