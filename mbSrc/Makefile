@@ -11,6 +11,8 @@ INC += mb.h
 
 LIBRARY = pvMB
 
+SHRLIB_VERSION = 4.1.0
+
 pvMB_SRCS += mb.cpp
 pvMB_LIBS = Com
 
