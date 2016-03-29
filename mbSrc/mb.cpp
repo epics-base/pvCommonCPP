@@ -1,4 +1,3 @@
-#ifdef WITH_MICROBENCH
 
 #include <time.h>
 #include <map>
@@ -7,13 +6,16 @@
 #include <limits>
 #include <fstream>
 #include <sstream>
-#include <unistd.h>
 
 #include <iomanip>
 
+#include <osiUnistd.h>
 #include <epicsMutex.h>
 
+#define epicsExportSharedSymbols
 #include "mb.h"
+
+#ifdef WITH_MICROBENCH
 
 // TODO clean this up
 #if defined(__APPLE__)
@@ -457,5 +459,10 @@ void MBInit()
         atexit(MBAtExit);
     }
 }
+
+#else // WITH_MICROBENCH
+// Need to export something here for Windows DLL builds
+
+void MBInit() {}
 
 #endif

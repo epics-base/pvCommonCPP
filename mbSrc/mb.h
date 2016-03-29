@@ -1,6 +1,10 @@
 #ifndef _MB_H_
 #define _MB_H_
 
+#include <shareLib.h>
+
+#ifdef WITH_MICROBENCH
+
 #include <string>
 #include <vector>
 
@@ -32,7 +36,7 @@ struct MBPoint
 
 struct MBEntity;
 
-extern void MBEntityRegister(MBEntity *e);
+epicsShareFunc void MBEntityRegister(MBEntity *e);
 
 typedef std::vector<MBPoint> MBPointType;
 
@@ -54,25 +58,22 @@ struct MBEntity
     }
 };
 
-extern uint64_t MBTime();
+epicsShareFunc uint64_t MBTime();
 
-extern void MBPointAdd(MBEntity &e, std::ptrdiff_t id, uint8_t stage);
+epicsShareFunc void MBPointAdd(MBEntity &e, std::ptrdiff_t id, uint8_t stage);
 
-extern void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
-extern void MBCSVImport(MBEntity &e, std::istream &i);
+epicsShareFunc void MBCSVExport(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
+epicsShareFunc void MBCSVImport(MBEntity &e, std::istream &i);
 
-extern void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
+epicsShareFunc void MBStats(MBEntity &e, uint8_t stageOnly, std::size_t skipFirstNSamples, std::ostream &o);
 
-extern void MBNormalize(MBEntity &e);
-
-
-extern void MBInit();
+epicsShareFunc void MBNormalize(MBEntity &e);
 
 
 #define MB_NAME(NAME) g_MB_##NAME
 
 #define MB_DECLARE(NAME, SIZE) MBEntity MB_NAME(NAME)(#NAME, SIZE) 
-#define MB_DECLARE_EXTERN(NAME) extern MBEntity MB_NAME(NAME)
+#define MB_DECLARE_EXTERN(NAME) epicsShareFunc MBEntity MB_NAME(NAME)
 
 #define MB_POINT_ID(NAME, STAGE, STAGE_DESC, ID) MBPointAdd(MB_NAME(NAME), ID, STAGE)
 
@@ -93,5 +94,9 @@ extern void MBInit();
 #define MB_PRINT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM) MB_CSV_EXPORT_OPT(NAME, STAGE_ONLY, SKIP_FIRST_N_SAMPLES, STREAM)
 
 #define MB_INIT MBInit()
+
+#endif // WITH_MICROBENCH
+
+epicsShareFunc void MBInit();
 
 #endif
