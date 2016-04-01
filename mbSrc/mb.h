@@ -33,7 +33,7 @@ struct MBEntity;
 
 epicsShareFunc void MBEntityExport(MBEntity *e);
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined (_MINGW)
 // Visual C++ complains without these decorations:
 #define MBCLASS class epicsShareClass
 #else
