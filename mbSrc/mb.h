@@ -33,14 +33,24 @@ struct MBEntity;
 
 epicsShareFunc void MBEntityExport(MBEntity *e);
 
-typedef std::vector<MBPoint> MBPointType;
+#ifdef _WIN32
+// Visual C++ complains without these decorations:
+#define MBCLASS class epicsShareClass
+#else
+#define MBCLASS
+#endif
+
+typedef MBCLASS std::allocator<MBPoint> MBPointAllocType;
+typedef MBCLASS std::vector<MBPoint, MBPointAllocType> MBPointType;
+typedef MBCLASS boost::atomic<std::size_t> MBPosType;
+typedef MBCLASS boost::atomic<std::ptrdiff_t> MBAutoIdType;
 
 struct epicsShareClass MBEntity
 {
     const char * name;
     MBPointType points;
-    boost::atomic<std::size_t> pos;
-    boost::atomic<std::ptrdiff_t> auto_id;
+    MBPosType pos;
+    MBAutoIdType auto_id;
 
     MBEntity(const char * name_, std::size_t size) : name(name_)
     {

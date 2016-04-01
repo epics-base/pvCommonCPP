@@ -1,4 +1,8 @@
 
+#if defined(_WIN32) && !defined(NOMINMAX)
+#define NOMINMAX
+#endif
+
 #include <time.h>
 #include <map>
 #include <math.h>
@@ -39,6 +43,16 @@ epicsUInt64 MBTime()
     // There is a machine-specific scaling factor to apply...
     return t.u64;
 }
+#elif defined(_WIN32)
+#include <windows.h>
+static epicsUInt64 PerformanceFrequency;
+epicsUInt64 MBTime()
+{
+    LARGE_INTEGER count;
+    QueryPerformanceCounter(&count);
+    epicsUInt64 PerfTicks = static_cast<epicsUInt64>(count.QuadPart) * 1000000000;
+    return PerfTicks / PerformanceFrequency;
+}
 #else
 #include <sys/time.h>
 epicsUInt64 MBTime()
@@ -58,6 +72,8 @@ epicsUInt64 MBTime()
 #ifdef vxWorks
 #include <taskLib.h>
 #define GETPID() taskIdSelf()
+#elif defined(_WIN32)
+#define GETPID() GetCurrentProcessId()
 #else
 #define GETPID() getpid()
 #endif
@@ -385,5 +401,12 @@ MBEntity::~MBEntity()
 #endif
 // Need to export something here for Windows DLL builds
 
-void MBInit() {}
+void MBInit()
+{
+#ifdef _WIN32
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    PerformanceFrequency = freq.QuadPart;
+#endif
+}
 
