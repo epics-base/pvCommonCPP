@@ -403,10 +403,12 @@ MBEntity::~MBEntity()
 
 void MBInit()
 {
+#ifdef WITH_MICROBENCH
 #ifdef _WIN32
     LARGE_INTEGER freq;
     QueryPerformanceFrequency(&freq);
     PerformanceFrequency = freq.QuadPart;
+#endif
 #endif
 }
 
