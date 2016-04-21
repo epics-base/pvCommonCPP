@@ -58,8 +58,6 @@ SRC_DIRS += $(BOOST_SRC)/boost
     INC_vxWorks += boost/type_traits/is_signed.hpp
     INC_vxWorks += boost/weak_ptr.hpp
 
-endif
-
 # Base doesn't have a vpath for .hpp files
 vpath %.hpp $(USR_VPATH) $(ALL_SRC_DIRS)
 
