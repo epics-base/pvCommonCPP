@@ -43,10 +43,12 @@ cat > configure/RELEASE.local << EOF
 EPICS_BASE=${EPICS_BASE}
 EOF
 
-# Set WITH_MICROBENCH so the testBoost program is built
-cat > configure/CONFIG_SITE.local << EOF
-WITH_MICROBENCH=1
-EOF
+if [ "${USE_MB}" = "MB_YES" ]; then
+	# must use TAB characters here
+	cat > configure/CONFIG_SITE.local <<- EOF
+	WITH_MICROBENCH=1
+	EOF
+fi
 
 make distclean all
 
