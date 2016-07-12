@@ -6,16 +6,16 @@
 #
 # Author: Ralph Lange <ralph.lange@gmx.de>
 # Copyright (C) 2013 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
-# Copyright (C) 2014-2015 ITER Organization.
+# Copyright (C) 2014-2016 ITER Organization.
 # All rights reserved. Use is subject to license terms.
 
 ###########################################
 # Determine EPICS Base version
 
-DEFAULT_BASE=3.14.12.5
+DEFAULT_BASE=3.15.4
 
-BASE=${1:-${DEFAULT_BASE}}
-USE_MB=${2:-"MB_YES"}
+BASE=${BASE:-${DEFAULT_BASE}}
+MB=${MB:-"NO_MICROBENCH"}
 
 ###########################################
 # Fetch and unpack dependencies
@@ -43,7 +43,7 @@ cat > configure/RELEASE.local << EOF
 EPICS_BASE=${EPICS_BASE}
 EOF
 
-if [ "${USE_MB}" = "MB_YES" ]; then
+if [ "${MB}" = "WITH_MICROBENCH" ]; then
 	# must use TAB characters here
 	cat > configure/CONFIG_SITE.local <<- EOF
 	WITH_MICROBENCH=1
