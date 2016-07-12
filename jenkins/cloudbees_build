@@ -29,6 +29,11 @@ cd ${STUFF}
 wget -nv https://openepics.ci.cloudbees.com/job/Base-${BASE}_Build/lastSuccessfulBuild/artifact/base-${BASE}.CB-dist.tar.gz
 tar -xzf base-${BASE}.CB-dist.tar.gz
 
+if [ "${MB}" = "WITH_MICROBENCH" ]; then
+    wget -nv https://openepics.ci.cloudbees.com/job/Boost-1.61.0_Build/lastSuccessfulBuild/artifact/boost-1.61.0.CB-dist.tar.gz
+    tar -xzf boost-1.61.0.CB-dist.tar.gz
+fi
+
 ###########################################
 # Build
 
