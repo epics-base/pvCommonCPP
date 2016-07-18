@@ -3,6 +3,18 @@
 
 #ifdef vxWorks
 #  include <boost/tr1/memory.hpp>
+
+#elif defined(__clang__)
+#  include <memory>
+namespace std {
+    namespace tr1 {
+        using std::shared_ptr;
+    }
+}
+
+#elif defined(_MSC_VER) && (_MSC_VER>=1600)
+#  include <memory>
+
 #else
 #  include <tr1/memory>
 #endif
