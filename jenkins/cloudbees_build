@@ -67,4 +67,4 @@ done
 ###########################################
 # Create distribution
 
-tar czf pvCommon.CB-dist.tar.gz lib include COPYRIGHT LICENSE
+tar czf pvCommon.CB-dist.tar.gz lib include LICENSE
