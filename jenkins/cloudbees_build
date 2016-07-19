@@ -9,11 +9,18 @@
 # Copyright (C) 2014-2016 ITER Organization.
 # All rights reserved. Use is subject to license terms.
 
+installTool () {
+    local module=$1
+    local version=$2
+
+    wget -nv https://openepics.ci.cloudbees.com/job/${module}-${version}_Build/lastSuccessfulBuild/artifact/${module,,}-${version}.CB-dist.tar.gz
+    tar -xzf ${module,,}-${version}.CB-dist.tar.gz
+}
+
 ###########################################
-# Determine EPICS Base version
+# Defaults for EPICS Base and MB
 
 DEFAULT_BASE=3.15.4
-
 BASE=${BASE:-${DEFAULT_BASE}}
 MB=${MB:-"NO_MICROBENCH"}
 
@@ -26,13 +33,8 @@ rm -fr ${STUFF}
 mkdir -p ${STUFF}
 cd ${STUFF}
 
-wget -nv https://openepics.ci.cloudbees.com/job/Base-${BASE}_Build/lastSuccessfulBuild/artifact/base-${BASE}.CB-dist.tar.gz
-tar -xzf base-${BASE}.CB-dist.tar.gz
-
-if [ "${MB}" = "WITH_MICROBENCH" ]; then
-    wget -nv https://openepics.ci.cloudbees.com/job/Boost-1.61.0_Build/lastSuccessfulBuild/artifact/boost-1.61.0.CB-dist.tar.gz
-    tar -xzf boost-1.61.0.CB-dist.tar.gz
-fi
+installTool Boost 1.61.0
+installTool Base ${BASE}
 
 ###########################################
 # Build
