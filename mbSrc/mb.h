@@ -24,11 +24,11 @@
 #  define EPICS_VERSION_INT VERSION_INT(EPICS_VERSION, EPICS_REVISION, EPICS_MODIFICATION, EPICS_PATCH_LEVEL)
 #endif
 
-#if EPICS_VERSION_INT>=VERSION_INT(3,15,0,1)
+#if EPICS_VERSION_INT < VERSION_INT(3,15,0,1)
 // Base-3.14 doesn't provide these:
 typedef long long epicsInt64;
 typedef unsigned long long epicsUInt64;
-#endif // Base-3.15 or later
+#endif // Base-3.14
 
 struct MBPoint
 {
